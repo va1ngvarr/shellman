@@ -119,4 +119,6 @@ Contributions welcome — open an issue or PR. If you plan to add features, plea
 
 **License**
 
-No license specified in the repository. Add a `LICENSE` file if you intend to set one.
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0-or-later). See the [LICENSE](./LICENSE) file for full license text.
+
+SPDX-License-Identifier: GPL-3.0-or-later
