@@ -31,13 +31,18 @@ pub fn copy_ssh_key(host: &str, user: &str, public_key_path: &str) {
     println!("ssh-copy-id exited with: {}", output);
 }
 
-pub fn connect_secure_server(host: &str, user: &str, protocol: SSHProtocol, public_key_path: &str) {
+pub fn connect_secure_server(
+    host: &str,
+    user: &str,
+    protocol: SSHProtocol,
+    private_key_path: &str,
+) {
     match protocol {
         SSHProtocol::SSH => {
             Command::new("ssh")
                 .arg("-t")
                 .arg("-i")
-                .arg(public_key_path)
+                .arg(private_key_path)
                 .arg(format!("{}@{}", user, host))
                 .status()
                 .expect("failed to execute ssh");
@@ -45,7 +50,7 @@ pub fn connect_secure_server(host: &str, user: &str, protocol: SSHProtocol, publ
         SSHProtocol::SFTP => {
             Command::new("sftp")
                 .arg("-i")
-                .arg(public_key_path)
+                .arg(private_key_path)
                 .arg(format!("{}@{}", user, host))
                 .status()
                 .expect("failed to execute sftp");

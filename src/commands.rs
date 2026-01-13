@@ -25,7 +25,7 @@ pub fn handle_use(
         server
             .existing_ssh_key
             .as_deref()
-            .unwrap_or("id_rsa_shellman.pub"),
+            .unwrap_or("id_rsa_shellman"),
     );
 
     Ok(())
