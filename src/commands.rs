@@ -1,7 +1,7 @@
 use comfy_table::{Table, presets::UTF8_FULL};
 
 use crate::ssh::registry::SSHRegistry;
-use crate::ssh::utils::{SSHProtocol, connect_secure_server, copy_ssh_key};
+use crate::ssh::utils::{SSHProtocol, connect_secure_server, copy_ssh_key, remove_ssh_key};
 
 pub fn handle_use(
     registry: &SSHRegistry,
@@ -78,7 +78,12 @@ pub fn handle_add(
 }
 
 pub fn handle_rm(registry: &mut SSHRegistry, id: u32) -> Result<(), Box<dyn std::error::Error>> {
-    registry.remove(id)?;
+    let server = registry.remove(id)?;
+
+    if server.existing_ssh_key.is_none() {
+        remove_ssh_key(&server.host);
+    }
+
     println!("Removed entry with id {}", id);
     Ok(())
 }

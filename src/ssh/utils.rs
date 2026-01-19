@@ -31,6 +31,15 @@ pub fn copy_ssh_key(host: &str, user: &str, public_key_path: &str) {
     println!("ssh-copy-id exited with: {}", output);
 }
 
+pub fn remove_ssh_key(host: &str) {
+    let output = Command::new("ssh-keygen")
+        .arg("-R")
+        .arg(host)
+        .status()
+        .expect("failed to execute ssh-copy-id");
+    println!("ssh-keygen exited with: {}", output);
+}
+
 pub fn connect_secure_server(
     host: &str,
     user: &str,

@@ -22,7 +22,7 @@ pub struct SSHRegistry {
 impl SSHRegistry {
     pub fn load() -> Result<SSHRegistry, Box<dyn std::error::Error>> {
         let f = File::open(SSH_REGISTRY_PATH)?;
-        let v: SSHRegistry = from_reader(f)?;
+        let v: SSHRegistry = from_reader(f).unwrap_or(SSHRegistry { servers: vec![] });
         Ok(v)
     }
 
@@ -35,27 +35,23 @@ impl SSHRegistry {
 
         Ok(())
     }
-    pub fn remove(&mut self, id: u32) -> Result<(), Box<dyn std::error::Error>> {
-        let f = File::create(SSH_REGISTRY_PATH)?;
+    pub fn remove(&mut self, id: u32) -> Result<Server, Box<dyn std::error::Error>> {
+        // Find the index of the server to remove
+        if let Some(index) = self.servers.iter().position(|server| server.id == id) {
+            // Remove the server and retrieve its host
+            let removed_server = self.servers.swap_remove(index);
 
-        let initial_len = self.servers.len();
-        self.servers = self
-            .servers
-            .clone()
-            .into_iter()
-            .filter(|s| s.id != id)
-            .collect();
+            // Write the updated servers list to the file
+            let f = File::create(SSH_REGISTRY_PATH)?;
+            to_writer_pretty(f, self)?;
 
-        if self.servers.len() == initial_len {
-            return Err(format!("Server with ID {} not found", id).into());
+            Ok(removed_server)
+        } else {
+            Err(format!("Server with ID {} not found", id).into())
         }
-
-        to_writer_pretty(f, &self)?;
-
-        Ok(())
     }
 
-    pub fn servers(&self) -> &[Server] {
+    pub fn servers(&self) -> &Vec<Server> {
         &self.servers
     }
 }
