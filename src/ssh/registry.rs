@@ -27,10 +27,21 @@ impl SSHRegistry {
     }
 
     pub fn add(&mut self, server: &Server) -> Result<(), Box<dyn std::error::Error>> {
-        let f = File::create(SSH_REGISTRY_PATH)?;
+        if let Some(server) = self
+            .servers
+            .iter()
+            .find(|s| s.host == server.host && s.user == server.user)
+        {
+            return Err(format!(
+                "Server with host {} and user {} already exists",
+                server.host, server.user
+            )
+            .into());
+        }
 
         self.servers.push(server.clone());
 
+        let f = File::create(SSH_REGISTRY_PATH)?;
         to_writer_pretty(f, &self)?;
 
         Ok(())
