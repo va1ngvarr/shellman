@@ -1,9 +1,13 @@
 use clap::{Parser, Subcommand};
+use std::env;
 
 mod commands;
 mod ssh;
 use crate::ssh::registry::SSHRegistry;
 use crate::ssh::utils::generate_ssh_keypair;
+
+const SSH_KEY_DIR: &str = ".ssh";
+const SSH_KEY_NAME: &str = "id_rsa_shellman";
 
 #[derive(Parser, Debug)]
 #[command(name = "shellman", author, version, about = "Easily manage SSH connections", long_about = None)]
@@ -86,19 +90,41 @@ fn parse_id(s: &str) -> Result<u32, String> {
     }
 }
 
+fn ssh_key_path() -> String {
+    format!(
+        "{}/{}/{}",
+        env::var("HOME").unwrap(),
+        SSH_KEY_DIR,
+        SSH_KEY_NAME
+    )
+}
+
+fn ssh_pub_key_path() -> String {
+    format!(
+        "{}/{}/{}.pub",
+        env::var("HOME").unwrap(),
+        SSH_KEY_DIR,
+        SSH_KEY_NAME
+    )
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
     let mut config = SSHRegistry::load()?;
 
-    if !std::path::Path::new("id_rsa_shellman").exists() {
-        generate_ssh_keypair()?;
+    if !std::path::Path::new(&ssh_key_path()).exists() {
+        println!(
+            "Generating SSH key pair at ~/{}/{}...\n",
+            SSH_KEY_DIR, SSH_KEY_NAME
+        );
+        generate_ssh_keypair(&ssh_key_path())?;
     }
 
     match cli.command {
         Commands::Use { id, sftp } => {
             println!("Connecting to id {}", id);
-            commands::handle_use(&config, id, sftp)?;
+            commands::handle_use(&config, id, sftp, &ssh_key_path())?;
         }
         Commands::Add {
             name,
@@ -106,7 +132,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             host,
             existing_ssh_key,
         } => {
-            commands::handle_add(&mut config, user, host, name, existing_ssh_key)?;
+            commands::handle_add(
+                &mut config,
+                user,
+                host,
+                name,
+                existing_ssh_key,
+                Some(&ssh_pub_key_path()),
+            )?;
         }
         Commands::Rm { id } => {
             commands::handle_rm(&mut config, id)?;

@@ -7,6 +7,7 @@ pub fn handle_use(
     registry: &SSHRegistry,
     id: u32,
     sftp: bool,
+    private_key_path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let server = registry
         .servers()
@@ -25,7 +26,7 @@ pub fn handle_use(
         server
             .existing_ssh_key
             .as_deref()
-            .unwrap_or("id_rsa_shellman"),
+            .unwrap_or(private_key_path),
     );
 
     Ok(())
@@ -52,6 +53,7 @@ pub fn handle_add(
     host: String,
     mut name: String,
     existing_ssh_key: Option<String>,
+    public_key_path: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if name.is_empty() {
         name = format!("{}@{}", user, host);
@@ -68,7 +70,7 @@ pub fn handle_add(
     };
 
     if new_server.existing_ssh_key.is_none() {
-        copy_ssh_key(&new_server.host, &new_server.user, "./id_rsa_shellman.pub");
+        copy_ssh_key(&new_server.host, &new_server.user, public_key_path.unwrap());
     }
 
     registry.add(&new_server)?;

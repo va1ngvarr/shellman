@@ -5,14 +5,14 @@ pub enum SSHProtocol {
     SFTP,
 }
 
-pub fn generate_ssh_keypair() -> Result<(), Box<dyn std::error::Error>> {
+pub fn generate_ssh_keypair(private_key_path: &str) -> Result<(), Box<dyn std::error::Error>> {
     let output = Command::new("ssh-keygen")
         .arg("-t")
         .arg("rsa")
         .arg("-b")
         .arg("2048")
         .arg("-f")
-        .arg("./id_rsa_shellman")
+        .arg(private_key_path)
         .arg("-N")
         .arg("")
         .output()

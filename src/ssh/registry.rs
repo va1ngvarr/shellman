@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
 use serde_json::from_reader;
 use serde_json::to_writer_pretty;
+use std::env;
 use std::fs::File;
 
-const SSH_REGISTRY_PATH: &str = "servers.json"; //"~/.config/shellman/servers.json";
+const SHELLMAN_DIR: &str = ".config/shellman";
+const SSH_REGISTRY_FILE: &str = "ssh_registry.json";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Server {
@@ -19,9 +21,27 @@ pub struct SSHRegistry {
     servers: Vec<Server>,
 }
 
+fn ssh_registry_path() -> String {
+    format!(
+        "{}/{}/{}",
+        env::var("HOME").unwrap(),
+        SHELLMAN_DIR,
+        SSH_REGISTRY_FILE
+    )
+}
+
+fn ssh_registry_dir() -> String {
+    format!("{}/{}", env::var("HOME").unwrap(), SHELLMAN_DIR)
+}
+
 impl SSHRegistry {
     pub fn load() -> Result<SSHRegistry, Box<dyn std::error::Error>> {
-        let f = File::open(SSH_REGISTRY_PATH)?;
+        if !std::path::Path::new(&ssh_registry_dir()).exists() {
+            std::fs::create_dir_all(&ssh_registry_dir())?;
+        }
+        let f = File::open(ssh_registry_path()).unwrap_or_else(|_| {
+            File::create(ssh_registry_path()).expect("Failed to create SSH registry file")
+        });
         let v: SSHRegistry = from_reader(f).unwrap_or(SSHRegistry { servers: vec![] });
         Ok(v)
     }
@@ -41,7 +61,7 @@ impl SSHRegistry {
 
         self.servers.push(server.clone());
 
-        let f = File::create(SSH_REGISTRY_PATH)?;
+        let f = File::create(ssh_registry_path())?;
         to_writer_pretty(f, &self)?;
 
         Ok(())
@@ -53,7 +73,7 @@ impl SSHRegistry {
             let removed_server = self.servers.swap_remove(index);
 
             // Write the updated servers list to the file
-            let f = File::create(SSH_REGISTRY_PATH)?;
+            let f = File::create(ssh_registry_path())?;
             to_writer_pretty(f, self)?;
 
             Ok(removed_server)
